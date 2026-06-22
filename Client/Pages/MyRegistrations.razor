@@ -1,0 +1,105 @@
+@page "/my-registrations"
+@inject ApiService Api
+
+<div class="page-header">
+    <h2>📋 My Registrations</h2>
+</div>
+
+@if (loading)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="card" style="margin-bottom:20px">
+        <div class="form-group" style="margin:0">
+            <label>Select your profile to view registrations</label>
+            <select @bind="selectedParticipantId" @bind:after="LoadRegistrations">
+                <option value="0">-- Select participant --</option>
+                @foreach (var p in participants ?? new())
+                {
+                    <option value="@p.Id">@p.Name (@p.Email)</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    @if (selectedParticipantId > 0)
+    {
+        @if (registrations == null || !registrations.Any())
+        {
+            <div class="alert alert-info">No registrations found.</div>
+        }
+        else
+        {
+            <table>
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Date</th>
+                        <th>Venue</th>
+                        <th>Registered On</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var reg in registrations)
+                    {
+                        <tr>
+                            <td>@reg.Event?.Name</td>
+                            <td>@reg.Event?.Date.ToString("dd MMM yyyy")</td>
+                            <td>@reg.Event?.Venue?.Name</td>
+                            <td>@reg.RegistrationDate.ToString("dd MMM yyyy")</td>
+                            <td>
+                                <span class="badge @GetBadgeClass(reg.Status)">
+                                    @reg.Status
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-danger" @onclick="() => CancelRegistration(reg.Id)">
+                                    Cancel
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    }
+}
+
+@code {
+    private List<Participant>? participants;
+    private List<Registration>? registrations;
+    private bool loading = true;
+    private int selectedParticipantId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        participants = await Api.GetParticipantsAsync();
+        loading = false;
+    }
+
+    private async Task LoadRegistrations()
+    {
+        if (selectedParticipantId > 0)
+            registrations = await Api.GetRegistrationsByParticipantAsync(selectedParticipantId);
+        else
+            registrations = null;
+    }
+
+    private async Task CancelRegistration(int id)
+    {
+        await Api.DeleteRegistrationAsync(id);
+        await LoadRegistrations();
+    }
+
+    private string GetBadgeClass(string status) => status switch
+    {
+        "Confirmed" => "badge-success",
+        "Pending" => "badge-warning",
+        "Cancelled" => "badge-danger",
+        _ => "badge-warning"
+    };
+}

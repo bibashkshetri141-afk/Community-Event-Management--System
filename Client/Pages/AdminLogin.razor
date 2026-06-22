@@ -1,0 +1,61 @@
+@page "/admin/login"
+@inject Client.Services.AuthService Auth
+@inject NavigationManager Nav
+
+<div style="min-height:100vh; display:flex; align-items:center; 
+    justify-content:center; background:#f8f9fa">
+    <div class="card" style="width:380px; padding:32px">
+        <div style="text-align:center; margin-bottom:28px">
+            <div style="font-size:2.5rem">🔐</div>
+            <h2 style="margin:8px 0 4px; color:#1e1e2e">Admin Login</h2>
+            <p style="color:#888; font-size:0.9rem; margin:0">
+                Sign in to manage events
+            </p>
+        </div>
+
+        <div class="form-group">
+            <label>Username</label>
+            <input @bind="username" @bind:event="oninput" placeholder="Enter username" @onkeydown="HandleKeyDown" />
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" @bind="password" @bind:event="oninput" placeholder="Enter password"
+                   @onkeydown="HandleKeyDown" />
+        </div>
+
+        @if (errorMessage != null)
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+
+        <button class="btn btn-primary" style="width:100%; padding:12px; font-size:1rem; margin-top:8px"
+                @onclick="HandleLogin">
+            Login
+        </button>
+
+        <p style="text-align:center; margin-top:16px; font-size:0.8rem; color:#aaa">
+            Hint: admin / admin123
+        </p>
+    </div>
+</div>
+
+@code {
+    private string username = "";
+    private string password = "";
+    private string? errorMessage = null;
+
+    private void HandleLogin()
+    {
+        errorMessage = null;
+        if (Auth.Login(username, password))
+            Nav.NavigateTo("/admin/venues");
+        else
+            errorMessage = "Invalid username or password.";
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            HandleLogin();
+    }
+}

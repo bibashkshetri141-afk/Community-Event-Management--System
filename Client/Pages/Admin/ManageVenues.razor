@@ -1,0 +1,139 @@
+@page "/admin/venues"
+@using Client.Shared
+@inject ApiService Api
+
+<AdminGuard>
+    <div class="page-header">
+        <h2>📍 Manage Venues</h2>
+        <button class="btn btn-primary" @onclick="ShowAddForm">+ Add Venue</button>
+    </div>
+
+    @if (showForm)
+    {
+        <div class="card" style="margin-bottom:20px">
+            <h3>@(editingVenue.Id == 0 ? "Add New Venue" : "Edit Venue")</h3>
+            <div class="form-group">
+                <label>Name</label>
+                <input @bind="editingVenue.Name" placeholder="Venue name" />
+            </div>
+            <div class="form-group">
+                <label>Address</label>
+                <input @bind="editingVenue.Address" placeholder="Full address" />
+            </div>
+            <div class="form-group">
+                <label>Capacity</label>
+                <input type="number" @bind="editingVenue.Capacity" placeholder="Max capacity" />
+            </div>
+            @if (formError != null)
+            {
+                <div class="alert alert-danger">@formError</div>
+            }
+            <button class="btn btn-success" @onclick="SaveVenue">Save</button>
+            <button class="btn btn-secondary" @onclick="HideForm">Cancel</button>
+        </div>
+    }
+
+    @if (loading)
+    {
+        <p>Loading...</p>
+    }
+    else if (venues == null || !venues.Any())
+    {
+        <div class="alert alert-info">No venues yet. Add one above.</div>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Address</th>
+                    <th>Capacity</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var venue in venues)
+                {
+                    <tr>
+                        <td>@venue.Name</td>
+                        <td>@venue.Address</td>
+                        <td>@venue.Capacity</td>
+                        <td>
+                            <button class="btn btn-secondary" @onclick="() => EditVenue(venue)">Edit</button>
+                            <button class="btn btn-danger" @onclick="() => DeleteVenue(venue.Id)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+@code {
+    private List<Venue>? venues;
+    private Venue editingVenue = new();
+    private bool showForm = false;
+    private bool loading = true;
+    private string? formError = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadVenues();
+        loading = false;
+    }
+
+    private async Task LoadVenues()
+    {
+        venues = await Api.GetVenuesAsync();
+    }
+
+    private void ShowAddForm()
+    {
+        editingVenue = new Venue();
+        formError = null;
+        showForm = true;
+    }
+
+    private void HideForm()
+    {
+        showForm = false;
+        formError = null;
+    }
+
+    private void EditVenue(Venue venue)
+    {
+        editingVenue = new Venue
+        {
+            Id = venue.Id,
+            Name = venue.Name,
+            Address = venue.Address,
+            Capacity = venue.Capacity
+        };
+        formError = null;
+        showForm = true;
+    }
+
+    private async Task SaveVenue()
+    {
+        if (string.IsNullOrWhiteSpace(editingVenue.Name))
+        {
+            formError = "Name is required.";
+            return;
+        }
+
+        if (editingVenue.Id == 0)
+            await Api.CreateVenueAsync(editingVenue);
+        else
+            await Api.UpdateVenueAsync(editingVenue);
+
+        await LoadVenues();
+        HideForm();
+    }
+
+    private async Task DeleteVenue(int id)
+    {
+        await Api.DeleteVenueAsync(id);
+        await LoadVenues();
+    }
+}
+</AdminGuard>

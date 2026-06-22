@@ -1,0 +1,22 @@
+@inject Client.Services.AuthService Auth
+@inject NavigationManager Nav
+
+@if (!Auth.IsAdminLoggedIn)
+{
+    <p>Redirecting to login...</p>
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && !Auth.IsAdminLoggedIn)
+            Nav.NavigateTo("/admin/login", forceLoad: false);
+    }
+}

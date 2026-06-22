@@ -1,0 +1,144 @@
+@page "/admin/participants"
+@using Client.Shared
+@inject ApiService Api
+
+<AdminGuard>
+    <div class="page-header">
+        <h2>👥 Manage Participants</h2>
+        <button class="btn btn-primary" @onclick="ShowAddForm">+ Add Participant</button>
+    </div>
+
+    @if (showForm)
+    {
+        <div class="card" style="margin-bottom:20px">
+            <h3>@(editingParticipant.Id == 0 ? "Add New Participant" : "Edit Participant")</h3>
+            <div class="form-group">
+                <label>Name</label>
+                <input @bind="editingParticipant.Name" placeholder="Full name" />
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" @bind="editingParticipant.Email" placeholder="Email address" />
+            </div>
+            <div class="form-group">
+                <label>Phone</label>
+                <input @bind="editingParticipant.Phone" placeholder="Phone number" />
+            </div>
+            @if (formError != null)
+            {
+                <div class="alert alert-danger">@formError</div>
+            }
+            <button class="btn btn-success" @onclick="SaveParticipant">Save</button>
+            <button class="btn btn-secondary" @onclick="HideForm">Cancel</button>
+        </div>
+    }
+
+    @if (loading)
+    {
+        <p>Loading...</p>
+    }
+    else if (participants == null || !participants.Any())
+    {
+        <div class="alert alert-info">No participants yet. Add one above.</div>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var participant in participants)
+                {
+                    <tr>
+                        <td>@participant.Name</td>
+                        <td>@participant.Email</td>
+                        <td>@participant.Phone</td>
+                        <td>
+                            <button class="btn btn-secondary" @onclick="() => EditParticipant(participant)">Edit</button>
+                            <button class="btn btn-danger" @onclick="() => DeleteParticipant(participant.Id)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+@code {
+    private List<Participant>? participants;
+    private Participant editingParticipant = new();
+    private bool showForm = false;
+    private bool loading = true;
+    private string? formError = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadParticipants();
+        loading = false;
+    }
+
+    private async Task LoadParticipants()
+    {
+        participants = await Api.GetParticipantsAsync();
+    }
+
+    private void ShowAddForm()
+    {
+        editingParticipant = new Participant();
+        formError = null;
+        showForm = true;
+    }
+
+    private void HideForm()
+    {
+        showForm = false;
+        formError = null;
+    }
+
+    private void EditParticipant(Participant participant)
+    {
+        editingParticipant = new Participant
+        {
+            Id = participant.Id,
+            Name = participant.Name,
+            Email = participant.Email,
+            Phone = participant.Phone
+        };
+        formError = null;
+        showForm = true;
+    }
+
+    private async Task SaveParticipant()
+    {
+        if (string.IsNullOrWhiteSpace(editingParticipant.Name))
+        {
+            formError = "Name is required.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(editingParticipant.Email))
+        {
+            formError = "Email is required.";
+            return;
+        }
+
+        if (editingParticipant.Id == 0)
+            await Api.CreateParticipantAsync(editingParticipant);
+        else
+            await Api.UpdateParticipantAsync(editingParticipant);
+
+        await LoadParticipants();
+        HideForm();
+    }
+
+    private async Task DeleteParticipant(int id)
+    {
+        await Api.DeleteParticipantAsync(id);
+        await LoadParticipants();
+    }
+}
+</AdminGuard>

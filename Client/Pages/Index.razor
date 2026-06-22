@@ -1,0 +1,153 @@
+@page "/"
+@inject ApiService Api
+
+@if (loading)
+{
+    <div style="display:flex; align-items:center; justify-content:center; height:60vh">
+        <div style="text-align:center; color:#888">
+            <div style="font-size:2rem; margin-bottom:8px">⏳</div>
+            <p>Loading...</p>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Hero -->
+    <div style="background:linear-gradient(135deg, #7c3aed, #4f46e5); border-radius:16px; 
+        padding:40px; margin-bottom:28px; color:white">
+        <h1 style="font-size:2rem; font-weight:700; margin:0 0 8px">
+            👋 Welcome to Community Events
+        </h1>
+        <p style="margin:0 0 24px; opacity:0.85; font-size:1rem">
+            Discover, join, and manage events happening in your community.
+        </p>
+        <div style="display:flex; gap:12px; flex-wrap:wrap">
+            <a href="/events" style="background:white; color:#7c3aed; padding:10px 22px; 
+                border-radius:8px; text-decoration:none; font-weight:600;
+                font-size:0.9rem">
+                📅 Browse Events
+            </a>
+            <a href="/my-registrations" style="background:rgba(255,255,255,0.15); color:white; 
+                padding:10px 22px; border-radius:8px; 
+                text-decoration:none; font-weight:600;
+                font-size:0.9rem; border:1px solid rgba(255,255,255,0.3)">
+                📋 My Registrations
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); 
+        gap:16px; margin-bottom:28px">
+        <div style="background:white; border-radius:12px; padding:20px; text-align:center;
+            box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid #f0f0f0">
+            <div style="font-size:2rem; font-weight:700; color:#7c3aed">@eventCount</div>
+            <div style="font-size:0.85rem; color:#888; margin-top:4px">Total Events</div>
+        </div>
+        <div style="background:white; border-radius:12px; padding:20px; text-align:center;
+            box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid #f0f0f0">
+            <div style="font-size:2rem; font-weight:700; color:#4f46e5">@venueCount</div>
+            <div style="font-size:0.85rem; color:#888; margin-top:4px">Venues</div>
+        </div>
+        <div style="background:white; border-radius:12px; padding:20px; text-align:center;
+            box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid #f0f0f0">
+            <div style="font-size:2rem; font-weight:700; color:#0891b2">@participantCount</div>
+            <div style="font-size:0.85rem; color:#888; margin-top:4px">Participants</div>
+        </div>
+        <div style="background:white; border-radius:12px; padding:20px; text-align:center;
+            box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid #f0f0f0">
+            <div style="font-size:2rem; font-weight:700; color:#16a34a">@activityCount</div>
+            <div style="font-size:0.85rem; color:#888; margin-top:4px">Activities</div>
+        </div>
+    </div>
+
+    <!-- Upcoming Events -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
+        <h2 style="font-size:1.1rem; font-weight:700; color:#1e1e2e; margin:0">
+            🗓 Upcoming Events
+        </h2>
+        <a href="/events" style="font-size:0.85rem; color:#7c3aed; text-decoration:none; font-weight:500">
+            View all →
+        </a>
+    </div>
+
+    @if (upcomingEvents?.Any() == true)
+    {
+        <div style="display:grid; gap:16px">
+            @foreach (var ev in upcomingEvents.Take(3))
+            {
+                <div style="background:white; border-radius:12px; padding:20px;
+                    box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid #f0f0f0;
+                    display:flex; justify-content:space-between; align-items:center">
+                    <div style="display:flex; align-items:center; gap:16px">
+                        <div style="background:#f3f0ff; border-radius:10px; padding:12px 16px;
+                            text-align:center; min-width:56px">
+                            <div style="font-size:1.2rem; font-weight:700; color:#7c3aed; line-height:1">
+                                @ev.Date.Day
+                            </div>
+                            <div style="font-size:0.7rem; color:#7c3aed; text-transform:uppercase">
+                                @ev.Date.ToString("MMM")
+                            </div>
+                        </div>
+                        <div>
+                            <h3 style="margin:0 0 4px; font-size:1rem; font-weight:600; color:#1e1e2e">
+                                @ev.Name
+                            </h3>
+                            <p style="margin:0 0 4px; font-size:0.85rem; color:#888">
+                                @ev.Description
+                            </p>
+                            <p style="margin:0; font-size:0.8rem; color:#aaa">
+                                📍 @(ev.Venue?.Name ?? "No venue") &nbsp;|&nbsp; 🕐 @ev.Time
+                            </p>
+                        </div>
+                    </div>
+                    <a href="/events" style="background:#7c3aed; color:white; padding:8px 18px; 
+                        border-radius:8px; text-decoration:none; font-size:0.85rem;
+                        font-weight:500; white-space:nowrap">
+                        Register
+                    </a>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div style="background:white; border-radius:12px; padding:40px; text-align:center;
+            box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid #f0f0f0">
+            <div style="font-size:2rem; margin-bottom:8px">📭</div>
+            <p style="color:#888; margin:0 0 16px">No upcoming events yet.</p>
+            <a href="/admin/login" style="color:#7c3aed; text-decoration:none; font-size:0.9rem">
+                🔐 Admin? Add events here
+            </a>
+        </div>
+    }
+}
+
+@code {
+    private int eventCount = 0;
+    private int venueCount = 0;
+    private int participantCount = 0;
+    private int activityCount = 0;
+    private List<Event>? upcomingEvents;
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var events = await Api.GetEventsAsync();
+        var venues = await Api.GetVenuesAsync();
+        var participants = await Api.GetParticipantsAsync();
+        var activities = await Api.GetActivitiesAsync();
+
+        eventCount = events?.Count ?? 0;
+        venueCount = venues?.Count ?? 0;
+        participantCount = participants?.Count ?? 0;
+        activityCount = activities?.Count ?? 0;
+
+        upcomingEvents = events?
+            .Where(e => e.Date >= DateTime.Today)
+            .OrderBy(e => e.Date)
+            .ToList();
+
+        loading = false;
+    }
+}

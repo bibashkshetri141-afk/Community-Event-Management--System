@@ -1,0 +1,194 @@
+@page "/events"
+@inject ApiService Api
+
+<div class="page-header">
+    <h2>📅 Upcoming Events</h2>
+</div>
+
+@if (loading)
+{
+    <p>Loading events...</p>
+}
+else if (events == null || !events.Any())
+{
+    <div class="alert alert-info">No events found.</div>
+}
+else
+{
+    <div class="card" style="margin-bottom:20px">
+        <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end">
+            <div class="form-group" style="margin:0; flex:1">
+                <label>Search by name</label>
+                <input @bind="searchName" @bind:event="oninput" placeholder="Type to search..." />
+            </div>
+            <div class="form-group" style="margin:0; flex:1">
+                <label>Filter by venue</label>
+                <select @bind="selectedVenueId">
+                    <option value="0">All venues</option>
+                    @foreach (var venue in venues ?? new())
+                    {
+                        <option value="@venue.Id">@venue.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group" style="margin:0; flex:1">
+                <label>Filter by date</label>
+                <input type="date" @bind="selectedDate" />
+            </div>
+            <button class="btn btn-secondary" @onclick="ClearFilters">Clear</button>
+        </div>
+    </div>
+
+    @foreach (var ev in FilteredEvents)
+    {
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:start">
+                <div>
+                    <h3 style="margin:0 0 6px">@ev.Name</h3>
+                    <p style="color:#666; margin:0 0 8px">@ev.Description</p>
+                    <p style="margin:0; font-size:0.85rem; color:#888">
+                        📍 @(ev.Venue?.Name ?? "No venue")
+                        &nbsp;|&nbsp;
+                        🗓 @ev.Date.ToString("dd MMM yyyy")
+                        &nbsp;|&nbsp;
+                        🕐 @ev.Time
+                    </p>
+                    @if (ev.EventActivities?.Any() == true)
+                    {
+                        <p style="margin:8px 0 0; font-size:0.85rem">
+                            🎯 Activities:
+                            @foreach (var ea in ev.EventActivities)
+                            {
+                                <span class="badge badge-success" style="margin-right:4px">
+                                    @ea.Activity?.Name
+                                </span>
+                            }
+                        </p>
+                    }
+                </div>
+                <button class="btn btn-primary" @onclick="() => RegisterForEvent(ev.Id)">
+                    Register
+                </button>
+            </div>
+        </div>
+    }
+}
+
+@if (showRegisterForm)
+{
+    <div style="position:fixed; inset:0; background:rgba(0,0,0,0.4);
+        display:flex; align-items:center; justify-content:center; z-index:100">
+        <div class="card" style="width:400px">
+            <h3>Register for Event</h3>
+            @if (registerSuccess)
+            {
+                <div class="alert alert-success">✅ Registered successfully!</div>
+                <button class="btn btn-secondary" @onclick="CloseRegisterForm">Close</button>
+            }
+            else
+            {
+                <div class="form-group">
+                    <label>Select your participant profile</label>
+                    <select @bind="selectedParticipantId">
+                        <option value="0">-- Select --</option>
+                        @foreach (var p in participants ?? new())
+                        {
+                            <option value="@p.Id">@p.Name (@p.Email)</option>
+                        }
+                    </select>
+                </div>
+                @if (registerError != null)
+                {
+                    <div class="alert alert-danger">@registerError</div>
+                }
+                <button class="btn btn-primary" @onclick="SubmitRegistration">Confirm</button>
+                <button class="btn btn-secondary" @onclick="CloseRegisterForm">Cancel</button>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private List<Event>? events;
+    private List<Venue>? venues;
+    private List<Participant>? participants;
+
+    private bool loading = true;
+    private string searchName = "";
+    private int selectedVenueId = 0;
+    private DateTime? selectedDate = null;
+
+    private bool showRegisterForm = false;
+    private bool registerSuccess = false;
+    private string? registerError = null;
+    private int selectedParticipantId = 0;
+    private int registeringEventId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        events = await Api.GetEventsAsync();
+        venues = await Api.GetVenuesAsync();
+        participants = await Api.GetParticipantsAsync();
+        loading = false;
+    }
+
+    private IEnumerable<Event> FilteredEvents
+    {
+        get
+        {
+            var result = events ?? new();
+
+            if (!string.IsNullOrWhiteSpace(searchName))
+                result = result.Where(e =>
+                    e.Name.Contains(searchName, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (selectedVenueId != 0)
+                result = result.Where(e => e.VenueId == selectedVenueId).ToList();
+
+            if (selectedDate.HasValue)
+                result = result.Where(e => e.Date.Date == selectedDate.Value.Date).ToList();
+
+            return result.OrderBy(e => e.Date);
+        }
+    }
+
+    private void ClearFilters()
+    {
+        searchName = "";
+        selectedVenueId = 0;
+        selectedDate = null;
+    }
+
+    private void RegisterForEvent(int eventId)
+    {
+        registeringEventId = eventId;
+        registerSuccess = false;
+        registerError = null;
+        selectedParticipantId = 0;
+        showRegisterForm = true;
+    }
+
+    private async Task SubmitRegistration()
+    {
+        if (selectedParticipantId == 0)
+        {
+            registerError = "Please select a participant profile.";
+            return;
+        }
+
+        var registration = new Registration
+        {
+            EventId = registeringEventId,
+            ParticipantId = selectedParticipantId,
+            Status = "Confirmed"
+        };
+
+        await Api.CreateRegistrationAsync(registration);
+        registerSuccess = true;
+    }
+
+    private void CloseRegisterForm()
+    {
+        showRegisterForm = false;
+    }
+}

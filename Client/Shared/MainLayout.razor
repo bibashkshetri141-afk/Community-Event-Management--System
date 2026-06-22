@@ -1,0 +1,32 @@
+@inherits LayoutComponentBase
+
+<div style="display:flex; min-height:100vh; font-family:'Segoe UI',system-ui,sans-serif">
+
+    <!-- Sidebar -->
+    <aside style="width:250px; background:#1e1e2e; display:flex; flex-direction:column; 
+        position:fixed; top:0; left:0; height:100vh; overflow-y:auto; z-index:100">
+        <NavMenu />
+    </aside>
+
+    <!-- Main body -->
+    <div style="margin-left:250px; flex:1; display:flex; flex-direction:column; min-height:100vh; background:#f0f2f5">
+
+        <!-- Topbar -->
+        <header style="background:white; padding:0 28px; height:60px; display:flex; 
+            align-items:center; justify-content:space-between; 
+            border-bottom:1px solid #e5e7eb; position:sticky; top:0; z-index:50">
+            <span style="font-size:0.95rem; font-weight:600; color:#1e1e2e">
+                Community Event Management System
+            </span>
+            <span style="font-size:0.85rem; color:#888">
+                @DateTime.Now.ToString("dd MMM yyyy")
+            </span>
+        </header>
+
+        <!-- Page content -->
+        <main style="padding:28px; flex:1">
+            @Body
+        </main>
+
+    </div>
+</div>

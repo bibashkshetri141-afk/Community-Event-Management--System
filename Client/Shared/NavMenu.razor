@@ -1,0 +1,87 @@
+@inject Client.Services.AuthService Auth
+@inject NavigationManager Nav
+@implements IDisposable
+
+<div style="display:flex; flex-direction:column; height:100%; padding-bottom:20px">
+
+    <div style="display:flex; align-items:center; gap:10px; padding:22px 20px; 
+        border-bottom:1px solid #2a2a3e; margin-bottom:8px">
+        <span style="font-size:1.5rem">🎉</span>
+        <span style="font-size:1rem; font-weight:700; color:#cba6f7">CommunityEvents</span>
+    </div>
+
+    <div style="padding:8px 12px">
+        <div style="font-size:0.68rem; text-transform:uppercase; letter-spacing:1.2px; 
+        color:#6c7086; padding:6px 8px 4px; font-weight:600">General</div>
+        <NavLink href="" Match="NavLinkMatch.All" class="nav-item">
+            <span>🏠</span> Home
+        </NavLink>
+        <NavLink href="events" class="nav-item">
+            <span>📅</span> Browse Events
+        </NavLink>
+        <NavLink href="my-registrations" class="nav-item">
+            <span>📋</span> My Registrations
+        </NavLink>
+    </div>
+
+    @if (Auth.IsAdminLoggedIn)
+    {
+        <div style="padding:8px 12px">
+            <div style="font-size:0.68rem; text-transform:uppercase; letter-spacing:1.2px; 
+            color:#6c7086; padding:6px 8px 4px; font-weight:600">Admin Panel</div>
+            <NavLink href="admin/events" class="nav-item">
+                <span>📅</span> Manage Events
+            </NavLink>
+            <NavLink href="admin/venues" class="nav-item">
+                <span>📍</span> Manage Venues
+            </NavLink>
+            <NavLink href="admin/activities" class="nav-item">
+                <span>🎯</span> Manage Activities
+            </NavLink>
+            <NavLink href="admin/participants" class="nav-item">
+                <span>👥</span> Manage Participants
+            </NavLink>
+        </div>
+
+        <div style="padding:12px 20px; border-top:1px solid #2a2a3e; margin-top:16px">
+            <div style="background:#313244; border-radius:8px; padding:8px 12px; 
+                color:#cba6f7; font-size:0.85rem; margin-bottom:8px; font-weight:600">
+                👤 Logged in as Admin
+            </div>
+            <button style="width:100%; padding:9px; background:#3b1f1f; color:#f38ba8; 
+                border:1px solid #5a2d2d; border-radius:8px; cursor:pointer; 
+                font-size:0.85rem" @onclick="Logout">
+                🚪 Logout
+            </button>
+        </div>
+    }
+    else
+    {
+        <div style="padding:8px 12px">
+            <div style="font-size:0.68rem; text-transform:uppercase; letter-spacing:1.2px; 
+            color:#6c7086; padding:6px 8px 4px; font-weight:600">Admin</div>
+            <NavLink href="admin/login" class="nav-item">
+                <span>🔐</span> Admin Login
+            </NavLink>
+        </div>
+    }
+
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Auth.OnAuthStateChanged += StateHasChanged;
+    }
+
+    private void Logout()
+    {
+        Auth.Logout();
+        Nav.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        Auth.OnAuthStateChanged -= StateHasChanged;
+    }
+}
